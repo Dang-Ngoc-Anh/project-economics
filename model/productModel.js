@@ -1,77 +1,65 @@
-// const { Sequelize, DataTypes, DATE, STRING } = require("sequelize");
-// const db = require("../config/dbConfig")
-// const bcrypt = require("bcrypt")
-// const user = db.define("user", {
-//     id:{
-//       type: DataTypes.INTEGER,
-//       allowNull: false,
-//       primaryKey: true,
-//       autoIncrement: true
-//     },
-//     name: {
-//         type: DataTypes.STRING,
-//         allowNull: false,
-//       },
-//     email: {
-//         type: DataTypes.STRING,
-//         allowNull: false,
-//         unique: true,
-//       },
-//     mobile: {
-//         type: DataTypes.STRING,
-//         allowNull: false
-//       },
-//     address: {
-//         type: DataTypes.STRING,
-//         allowNull: false
-//       },
-//     password: {
-//         type: DataTypes.STRING,
-//         allowNull: false,
-//       },
-//     role:{
-//       type: DataTypes.STRING,
-//       defaultValue:"user"
-//     },
-//     isBlocked: {
-//       type: DataTypes.BOOLEAN,
-//       defaultValue: false,
-//     },
-//     cart: {
-//       type: Array,
-//       defaultValue: [],
-//     },
-//     address: {
-//       type: DataTypes.STRING,
-//     },
-//     wishlist: 
-//       [{ type: DataTypes.STRING}]
-//     ,
-//     refreshToken: {
-//       type: DataTypes.STRING,
-//     },
-//     passwordChangedAt: DATE,
-//     passwordResetToken: STRING,
-//     passwordResetExpires: DATE,
-//     timesStamps: true
-// }) 
+// const mongoose = require("mongoose"); // Erase if already required
 
-// user.beforeCreate((user , options) =>{
-//     return bcrypt.hash(user.password, 10)
-//     .then(hash => {
-//         user.password = hash;
-//     })
-//     .catch(err => { 
-//         throw new Error(); 
-//     });
-// })
-
-// db.sync().then( async () => {
-    
-//     console.log('User table created successfully!');
-//  }).catch((error) => {
-//     console.error('Unable to create table : ', error);
-//  });
-
-
-// module.exports = user
+// Declare the Schema of the Mongo model
+var productSchema = new mongoose.Schema(
+    {
+      title: {
+        type: String,
+        required: true,
+        trim: true,
+      },
+      slug: {
+        type: String,
+        required: true,
+        unique: true,
+        lowercase: true,
+      },
+      description: {
+        type: String,
+        required: true,
+      },
+      price: {
+        type: Number,
+        required: true,
+      },
+      category: {
+        type: String,
+        required: true,
+      },
+      brand: {
+        type: String,
+        required: true,
+      },
+      quantity: {
+        type: Number,
+        required: true,
+      },
+      sold: {
+        type: Number,
+        default: 0,
+      },
+      images: [
+        {
+          public_id: String,
+          url: String,
+        },
+      ],
+      color: [],
+      tags: String,
+      ratings: [
+        {
+          star: Number,
+          comment: String,
+          postedby: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        },
+      ],
+      totalrating: {
+        type: String,
+        default: 0,
+      },
+    },
+    { timestamps: true }
+  );
+  
+  //Export the model
+  module.exports = mongoose.model("product", productSchema);

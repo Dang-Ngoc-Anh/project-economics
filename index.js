@@ -6,6 +6,7 @@ const morgan = require("morgan")
 const bodyParser = require("body-parser")
 const userRouter = require("./routes/userRoute")
 const cors = require('cors');
+const cookieParser = require("cookie-parser")
 require('dotenv').config();
 
 const dbConfig = require("./config/dbConfig")
@@ -16,6 +17,8 @@ app.use(cors());
 app.use(morgan("dev"));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use(cookieParser())
+
 app.use("/api" , userRouter);
 
 app.listen(port , ()=>{

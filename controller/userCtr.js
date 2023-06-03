@@ -1,6 +1,9 @@
 const userModel = require("../model/userModel");
 const asynHandler = require("express-async-handler")
 const { generateTokenn } = require("../config/jwtToken");
+const { validateMonggodbId } = require("../util/validateMongodbId");
+const { generaterefreshTokenn } = require("../config/refreshToken");
+const jwt = require("jsonwebtoken")
 const createUser = asynHandler(async(req, res)=>{
     try {
         const email = req.body.email;
@@ -26,7 +29,10 @@ const getAllUser = asynHandler(async(req , res)=>{
     if(id === undefined)
         items = await userModel.find({});
     else
+    {
+        validateMonggodbId(id);
         items= await userModel.findById(id);
+    }
     res.json(items)
 })
 
@@ -45,6 +51,7 @@ const deleteUser = asynHandler(async(req , res) =>{
 const updateUser = asynHandler(async(req , res)=>{
     try {
         const {_id} = req.user;
+        validateMonggodbId(_id);
         const user =  await userModel.findOneAndUpdate(
             _id,
             {
@@ -66,8 +73,22 @@ const updateUser = asynHandler(async(req , res)=>{
 const loginUser = asynHandler( async(req , res)=>{
     const {email , password} = req.body;
     
+    // check user or not exit
     const findUser = await userModel.findOne({email})
     if(findUser){
+        const refreshToken = await generaterefreshTokenn(findUser?.id);
+        const updateUser = await userModel.findByIdAndUpdate(findUser.id, {
+            refreshToken: refreshToken
+        },
+        {
+            new : true,
+        });
+        res.cookie('refreshToken' , refreshToken, {
+            httpOnly: true,
+            maxAge: 2 * 60 * 60 * 1000,
+
+        });
+
         res.json({
             _id : findUser?._id,
             firstname : findUser?.firstname,
@@ -82,12 +103,64 @@ const loginUser = asynHandler( async(req , res)=>{
 });
 
 const blockUser = asynHandler(async(req,res)=>{
+    const {id}  = req.params;
+    try{
+        const block = await userModel.findByIdAndUpdate(
+            id,
+            {
+                isBlocked : true,
+            },
+            {
+                new : true,
+            }
+        );
 
+        res.json({
+            message : "user blocked"
+        })
+    }catch(error){
+        throw new Error(error);
+    }
 })
 
 const unblockUser = asynHandler(async(req, res)=>{
+    const {id}  = req.params;
+    try{
+        const block = await userModel.findByIdAndUpdate(
+            id,
+            {
+                isBlocked : false,
+            },
+            {
+                new : true,
+            }
+        );
 
+        res.json({
+            message : "user un blocked"
+        })
+    }catch(error){
+        throw new Error(error);
+    }
 })
+
+const handlerefreshToken = asynHandler(async(req , res)=>{
+    const cookie = req.cookies;
+    console.log(cookie)
+    if(!cookie?.refreshToken) throw new Error("No refesh token in cookies");
+    const refreshToken = cookie.refreshToken;
+    console.log(refreshToken);
+    const user = await userModel.findOne({refreshToken})
+    if(!user) throw new Error("No Refesh Token present in db");
+    jwt.verify(refreshToken, process.env.JWT_SECRET , (err , decode)=>{
+        if(err || user.id !== decode.id){
+            throw new Error("There are something wrong with refersh token");
+        }
+    })
+
+    const accessToken = generateTokenn(userModel._id);
+    res.json({accessToken})
+    });
 module.exports = {
     createUser,
     getAllUser,
@@ -95,5 +168,6 @@ module.exports = {
     updateUser,
     loginUser,
     blockUser,
-    unblockUser
+    unblockUser,
+    handlerefreshToken
 }

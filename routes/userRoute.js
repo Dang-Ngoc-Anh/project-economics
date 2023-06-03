@@ -7,14 +7,17 @@ const {
     loginUser,
     updateUser,
     blockUser,
-    unblockUser
+    unblockUser,
+    handlerefreshToken
 } = require("../controller/userCtr");
 
 const  {authMiddleware , isAdmin} = require("../middlewares/authorMiddleware")
+
 router.post("/v1/user", createUser);
 router.post("/v1/user/login", loginUser);
 router.delete("/v1/user/:id",deleteUser);
 router.get("/v1/user", getAllUser);
+router.get("/v1/user/refesh-token" , handlerefreshToken);
 router.get("/v1/user/:id" ,authMiddleware ,isAdmin, getAllUser);
 router.put("/v1/user/" ,authMiddleware, updateUser);
 router.put("/v1/user/:id" , updateUser);
