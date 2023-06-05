@@ -1,5 +1,5 @@
 const express = require("express");
-let router = express.Router();
+const router = express.Router();
 const {
     createUser,
     getAllUser,
@@ -8,12 +8,14 @@ const {
     updateUser,
     blockUser,
     unblockUser,
-    handlerefreshToken
+    handlerefreshToken,
+    updatePassword
 } = require("../controller/userCtr");
 
 const  {authMiddleware , isAdmin} = require("../middlewares/authorMiddleware")
 
 router.post("/v1/user", createUser);
+router.put("/v1/user/password",authMiddleware, updatePassword);
 router.post("/v1/user/login", loginUser);
 router.delete("/v1/user/:id",deleteUser);
 router.get("/v1/user", getAllUser);

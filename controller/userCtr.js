@@ -85,7 +85,7 @@ const loginUser = asynHandler( async(req , res)=>{
         });
         res.cookie('refreshToken' , refreshToken, {
             httpOnly: true,
-            maxAge: 2 * 60 * 60 * 1000,
+            maxAge: 72 * 60 * 60 * 1000,
 
         });
 
@@ -161,6 +161,66 @@ const handlerefreshToken = asynHandler(async(req , res)=>{
     const accessToken = generateTokenn(userModel._id);
     res.json({accessToken})
     });
+
+const logout = asynHandler(async (req, res) => {
+        const cookie = req.cookies;
+        if (!cookie?.refreshToken) throw new Error("No Refresh Token in Cookies");
+        const refreshToken = cookie.refreshToken;
+        const user = await userModel.findOne({ refreshToken });
+        if (!user) {
+          res.clearCookie("refreshToken", {
+            httpOnly: true,
+            secure: true,
+          });
+          return res.sendStatus(204); // forbidden
+        }
+        await User.findOneAndUpdate(refreshToken, {
+          refreshToken: "",
+        });
+        res.clearCookie("refreshToken", {
+          httpOnly: true,
+          secure: true,
+        });
+        res.sendStatus(204); // forbidden
+      });  
+
+
+// save user Address
+
+const saveAddress = asynHandler(async (req, res, next) => {
+    const { _id } = req.user;
+    validateMonggodbId(_id);
+  
+    try {
+      const updatedUser = await userModel.findByIdAndUpdate(
+        _id,
+        {
+          address: req?.body?.address,
+        },
+        {
+          new: true,
+        }
+      );
+      res.json(updatedUser);
+    } catch (error) {
+      throw new Error(error);
+    }
+  });
+
+  const updatePassword = asynHandler(async (req, res) => {
+    const {_id} = req.user;
+    console.log(req.user)
+    const { password } = req.body;
+    validateMonggodbId(_id);
+    const user = await userModel.findById(_id);
+    if (password) {
+      user.password = password;
+      const updatedPassword = await user.save();
+      res.json(updatedPassword);
+    } else {
+      res.json(user);
+    }
+  });
 module.exports = {
     createUser,
     getAllUser,
@@ -169,5 +229,8 @@ module.exports = {
     loginUser,
     blockUser,
     unblockUser,
-    handlerefreshToken
+    handlerefreshToken,
+    logout,
+    saveAddress,
+    updatePassword,
 }
